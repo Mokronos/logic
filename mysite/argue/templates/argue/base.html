@@ -1,8 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <title>Logic</title>
     <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="icon" href="#" />
 </head>
-<body>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <div>0</div>
     {% block content %}
     {% endblock content %}
 </body>
+</html>

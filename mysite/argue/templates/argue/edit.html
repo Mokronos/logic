@@ -1,0 +1,15 @@
+{% extends "argue/base.html" %}
+{% block content %}
+    <form hx-put="" hx-target="this" hx-swap="outerHTML">
+        <div>
+            <label>Username</label>
+            <input type="text" name="username" value={{username}}>
+        </div>
+        <div>
+            <label>Email</label>
+            <input type="text" name="email" value={{email}}>
+        </div>
+        <button type="submit">Save</button>
+        <button hx-get="">Cancel</button>
+    </form>
+{% endblock content %}

@@ -1,17 +1,8 @@
 {% extends "argue/base.html" %}
 {% block content %}
-    <p>Home</p>
-    <button hx-get="clicked"
-        hx-trigger="click"
-        hx-target="previous p"
-        hx-swap="innerHTML"
-        >
-        Click Me!
-    </button>
-
     <div hx-target="this" hx-swap="outerHTML">
-        <div><label>Username:</label> Meeee</div>
-        <div><label>Email:</label> na@a.com</div>
-        <button hx-get="account/edit" class="btn btn-primary">Edit</button>
+        <div><label>Username:</label> {{username}} </div>
+        <div><label>Email:</label> {{email}}</div>
+        <button hx-get="edit" class="btn btn-primary">Edit</button>
     </div>
 {% endblock content %}
