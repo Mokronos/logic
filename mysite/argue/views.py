@@ -6,21 +6,30 @@ class User:
         self.username = username
         self.email = email
 
-user1 = User('joe', 'test')
+    def __hash__(self):
+        return hash((self.username, self.email))
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
+
+cur_user = User('joe', 'test')
+users = set()
 
 # Create your views here.
 def index(request):
     if request.method == 'PUT':
         print(request.body)
         data = QueryDict(request.body)
-        user1.username = data.get('username')
-        user1.email = data.get('email')
+        cur_user.username = data.get('username')
+        cur_user.email = data.get('email')
+        new_user = User(cur_user.username, cur_user.email)
+        users.add(new_user)
 
-    return render(request, 'argue/index.html', { 'username': user1.username, 'email': user1.email })
+    return render(request, 'argue/index.html', { 'username': cur_user.username, 'email': cur_user.email, 'users': users })
 
 def clicked(request):
     return HttpResponse('You clicked me!')
 
 def edit(request):
     
-    return render(request, 'argue/edit.html', { 'username': user1.username, 'email': user1.email })
+    return render(request, 'argue/edit.html', { 'username': cur_user.username, 'email': cur_user.email, 'users': users })
