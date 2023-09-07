@@ -11,13 +11,6 @@
         </div>
         <button type="submit">Save</button>
         <button hx-get="">Cancel</button>
-        <ul>
-        {% for user in users %}
-            <li>
-                Username: {{user.username}}
-                Email: {{user.email}}
-            </li>
-        {% endfor %}
-        </ul>
+        {% include "argue/list.html" %}
     </form>
 {% endblock content %}

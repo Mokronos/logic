@@ -1,0 +1,21 @@
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
+        {% for user in users %}
+        <tr>
+            <td>{{user.username}}</td>
+            <td>{{user.email}}</td>
+            <td>
+                <button hx-delete="delete/{{user.id}}">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
