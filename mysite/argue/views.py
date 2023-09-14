@@ -1,39 +1,65 @@
 from django.shortcuts import render
 from django.http import HttpResponse, QueryDict
-from argue.models import User
-
+from argue.models import Axiom, Argument, Premise, Conclusion
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+@login_required(redirect_field_name='home', login_url='login')
 def index(request):
+    if request.htmx:
+        base_template = "_partial.html"
+    else:
+        base_template = "base.html"
+
     if request.method == 'PUT':
         print(f"PUT: {request.body}")
         data = QueryDict(request.body)
-        new_user = User()
+        new_axiom = Axiom()
         # need validation here
-        new_user.username = data.get('username')
-        new_user.email = data.get('email')
+        new_axiom.name = data.get('name')
+        new_axiom.content = data.get('content')
+        new_axiom.owner = request.user
 
         try:
-            new_user.save()
+            new_axiom.save()
+            print("Saved new axiom")
+            for axiom in Axiom.objects.all():
+                print(axiom.name)
         except:
-            print("User already exists")
+            print("Axiom already exists")
 
-    for user in User.objects.all():
-        print(f"User: {user.username}, {user.email}")
-    return render(request, 'argue/index.html', { 'users': User.objects.all() })
+    response = render(request, 'argue/index.html', { 'axioms': Axiom.objects.all(),
+                                                     'base_template': base_template })
+    return response
 
-def clicked():
-    return HttpResponse("You clicked me!")
+@login_required
+def add(request):
+    if request.htmx:
+        base_template = "_partial.html"
+    else:
+        base_template = "base.html"
+    response = render(request, 'argue/add.html', { 'axioms': Axiom.objects.all(),
+                                                    'base_template': base_template })
+    return response
 
-def edit(request):
-    return render(request, 'argue/edit.html', { 'users': User.objects.all() })
-
+@login_required
 def delete(request, id):
     if request.method == 'DELETE':
         print(f"DELETE: {request.body}")
         try:
-            User.objects.get(id=id).delete()
+            Axiom.objects.get(id=id).delete()
             return HttpResponse("", status=200)
         except:
-            print("User does not exist")
-            return
+            print("Axiom does not exist")
+
+
+def overview(request):
+    if request.htmx:
+        base_template = "_partial.html"
+    else:
+        base_template = "base.html"
+    response =  render(request, 'argue/overview.html', { 'base_template': base_template,
+                                                        'premises': Premise.objects.all(),
+                                                        'conclusions': Conclusion.objects.all()})
+    return response
+

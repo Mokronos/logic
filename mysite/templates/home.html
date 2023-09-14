@@ -1,0 +1,8 @@
+{% extends base_template %}
+{% block content %}
+{% if user.is_authenticated %}
+hi, {{ user.username }}!! You are logged in!
+{% else %}
+<p>You are not logged in</p>
+{% endif %}
+{% endblock %}

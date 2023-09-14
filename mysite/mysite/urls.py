@@ -16,8 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic.base import TemplateView
+from accounts import views
 
 urlpatterns = [
-    path('', include('argue.urls')),
+    path('', views.home, name="home"),
+    path('auth/', include(('accounts.urls', 'accounts'), namespace='accounts')),
+    path('argue/', include(('argue.urls', 'argue'), namespace='argue')),
     path('admin/', admin.site.urls),
+    # path('accounts/', include('django.contrib.auth.urls')),
 ]

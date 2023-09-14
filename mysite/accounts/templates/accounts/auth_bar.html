@@ -1,0 +1,28 @@
+<div hx-get={% url 'accounts:auth_bar' %}
+    hx-trigger="htmx:historyRestore, authAction from:body"
+    hx-swap="outerHTML">
+{% if user.is_authenticated %}
+    <a hx-post={% url 'accounts:logout' %}
+        hx-trigger="click"
+        hx-target="main"
+        hx-swap="innerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        hx-confirm="Are you sure you want to logout?">
+        Logout
+    </a>
+{% else %}
+    <a href={% url 'accounts:login' %}
+        hx-target="main"
+        hx-swap="innerHTML"
+        hx-select="main"
+        hx-boost="true">
+        Login
+    </a>
+    <a href={% url 'accounts:signup' %}
+        hx-target="main"
+        hx-swap="innerHTML"
+        hx-boost="true">
+        Signup
+    </a>
+{% endif %}
+</div>

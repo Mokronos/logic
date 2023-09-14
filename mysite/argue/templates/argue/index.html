@@ -1,9 +1,9 @@
-{% extends "argue/base.html" %}
+{% extends base_template %}
 {% block content %}
-    <div hx-target="this" hx-swap="outerHTML">
-        <div><label>Username:</label> dummy </div>
-        <div><label>Email:</label> dummy </div>
-        <button hx-get="edit" class="btn btn-primary">Edit</button>
+    <div hx-target="main" hx-swap="innerHTML">
+        <div><label>Name:</label> dummy </div>
+        <div><label>Content:</label> dummy </div>
+        <button hx-get={% url 'add' %} class="btn btn-primary">Add</button>
         {% include "argue/list.html" %}
     </div>
 {% endblock content %}

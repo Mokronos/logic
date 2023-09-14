@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Overview</h1>
+    <p>Here you can see all the arguments that are currently active.</p>
+    <h2>Premises:</h2>
+    <ul>
+        {% for premise in premises %}
+        <li>{{ premise.name }}: {{ premise.content }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Conclusions:</h2>
+    <ul>
+        {% for conclusion in conclusions %}
+        <li>{{ conclusion.name }}: {{ conclusion.content }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends base_template %}
+{% block content %}
+<form hx-put={% url 'index' %} hx-target="main" hx-swap="innerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <div>
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" value="" autofocus>
+        </div>
+        <div>
+            <label for="content">Content</label>
+            <input type="text" name="content" id="content" value="">
+        </div>
+        <button type="submit">Save</button>
+        <button hx-get={% url 'index' %}>Cancel</button>
+        {% include "argue/list.html" %}
+    </form>
+{% endblock content %}

@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Logic</title>
+    <title>{% block title %}Auth Tut{% endblock %}</title>
     <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="icon" href="#" />
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-    {% block content %}
-    {% endblock content %}
+<body>
+    {% include "accounts/auth_bar.html" %}
+    {% include "navbar.html" %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

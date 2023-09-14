@@ -1,17 +1,24 @@
 <table>
     <thead>
         <tr>
-            <th>Username</th>
-            <th>Email</th>
+            <th>Name</th>
+            <th>Content</th>
+            <th>Owner</th>
+            <th>Action</th>
         </tr>
     </thead>
-    <tbody hx-target="closest tr" hx-swap="outerHTML">
-        {% for user in users %}
+    <tbody >
+        {% for axiom in axioms %}
         <tr>
-            <td>{{user.username}}</td>
-            <td>{{user.email}}</td>
+            <td>{{axiom.name}}</td>
+            <td>{{axiom.content}}</td>
+            <td>{{axiom.owner.username}}</td>
             <td>
-                <button hx-delete="delete/{{user.id}}">
+                <button hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    hx-delete={% url 'delete' axiom.id %}
+                    hx-push-url="false">
                     Delete
                 </button>
             </td>
