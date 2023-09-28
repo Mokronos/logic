@@ -1,4 +1,3 @@
-from flask import Flask
 from flask import (
         render_template, redirect, url_for, request, Blueprint, flash, session, g
         )
@@ -8,8 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import functools
 
 from .db import get_db
-
-app = Flask(__name__)
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
