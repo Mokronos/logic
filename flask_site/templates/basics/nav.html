@@ -1,2 +1,6 @@
-<span><a href="{{ url_for('base.about') }}">About</a></span>
-<span><a href="{{ url_for('base.index') }}">Home</a></span>
+<span><a href="{{ url_for('base.about') }}">About</a></span> |
+<span><a href="{{ url_for('base.index') }}">Home</a></span> |
+<span><a href="{{ url_for('argue.index') }}">Overview</a></span> |
+<span><a href="{{ url_for('argue.create', category='argument') }}">New Argument</a></span> |
+<span><a href="{{ url_for('argue.create', category='premise') }}">New Premise</a></span> |
+<span><a href="{{ url_for('argue.create', category='conclusion') }}">New Conclusion</a></span>

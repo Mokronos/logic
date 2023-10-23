@@ -1,5 +1,6 @@
 {% if g.user %}
     <span>{{ g.user.username }}</span>
+    <span>|{{ g.user.id }}</span>
     <span><a href="{{ url_for('auth.logout') }}">Log out</a></span>
 {% else %}
     <span><a href="{{ url_for('auth.login') }}">Log in</a></span>

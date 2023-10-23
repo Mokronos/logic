@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Overview</h1>
+    <a href="{{ url_for('argue.create', category='premise') }}">Add New</a>
+    <h2>Create New Premise</h2>
+    <form method="post">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title">
+        <label for="content">Description</label>
+        <textarea name="content" id="content"></textarea>
+        <label for="argument_id">Choose an argument this premise belongs to:</label>
+        <select name="argument_id" id="argument_id">
+        {% for argument in arguments %}
+        <option value="{{ argument.id }}">{{ argument.id }} | {{ argument.title }}</option>
+        {% endfor %}
+        </select>
+        <input type="submit" value="Create">
+    </form>
+{% endblock %}

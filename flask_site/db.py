@@ -3,6 +3,8 @@ import sqlite3
 import click
 from flask import current_app, g
 
+from . import example_db
+
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(
@@ -32,6 +34,21 @@ def init_db_command():
     init_db()
     click.echo('Initialized the database.')
 
+    example_db.add_data(get_db())
+    click.echo("Added some sample data!")
+
+@click.command('add-data')
+def add_data_command():
+    """
+    command to add some sample data on init
+    """
+
+    init_db()
+    click.echo("Reset database!")
+    example_db.add_data(get_db())
+    click.echo("Added some sample data!")
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(add_data_command)

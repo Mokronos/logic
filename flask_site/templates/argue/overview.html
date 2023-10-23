@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Overview</h1>
+    <h2>Arguments</h2>
+    <table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>title</th>
+            <th>content</th>
+            <th>Author</th>
+            <th>created_at</th>
+            <th>has premises</th>
+            <th>has conclusion</th>
+            <th>actions</th>
+        </tr>
+    </thead>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
+        {% for argument in arguments %}
+            <tr>
+                <td>{{ argument.id }}</td>
+                <td>{{ argument.title }}</td>
+                <td>{{ argument.content }}</td>
+                <td>{{ g.user.username }}</td>
+                <td>{{ argument.created }}</td>
+                <td>| 
+                    {% for premise_ids in arguments_premises[argument.id] %}
+                        {{ premise_ids.premise_id }} | 
+                    {% endfor %}
+                </td>
+                <td>| 
+                    {% for conclusion_ids in arguments_conclusions[argument.id] %}
+                        {{ conclusion_ids.conclusion_id }} | 
+                    {% endfor %}
+                </td>
+                <td>
+                    <button hx-delete="{{ url_for('argue.delete', id=argument.id) }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <h2>Premise</h2>
+    <table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>title</th>
+            <th>content</th>
+            <th>Author</th>
+            <th>created_at</th>
+            <th>Belongs to Argument</th>
+            <th>actions</th>
+        </tr>
+    </thead>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
+        {% for premise in premises %}
+            <tr>
+                <td>{{ premise.id }}</td>
+                <td>{{ premise.title }}</td>
+                <td>{{ premise.content }}</td>
+                <td>{{ g.user.username }}</td>
+                <td>{{ premise.created }}</td>
+                <td>{{ premise.argument_id }}</td>
+                <td>
+                    <button hx-delete="{{ url_for('argue.delete', id=premise.id) }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <h2>Conclusion</h2>
+    <table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>title</th>
+            <th>content</th>
+            <th>Author</th>
+            <th>created_at</th>
+            <th>Belongs to Argument</th>
+            <th>actions</th>
+        </tr>
+    </thead>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
+        {% for conclusion in conclusions %}
+            <tr>
+                <td>{{ conclusion.id }}</td>
+                <td>{{ conclusion.title }}</td>
+                <td>{{ conclusion.content }}</td>
+                <td>{{ g.user.username }}</td>
+                <td>{{ conclusion.created }}</td>
+                <td>{{ conclusion.argument_id }}</td>
+                <td>
+                    <button hx-delete="{{ url_for('argue.delete', id=conclusion.id) }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}

@@ -6,9 +6,10 @@
     <script src="https://unpkg.com/htmx.org@1.9.6" integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='diamond.gif') }}" type="image/gif">
 </head>
-<body hx-boost="true" hx-indicator="body">
+<!-- <body hx-boost="true" hx-indicator="body"> -->
+<body hx-boost="true">
     {% include 'basics/auth_bar.html' %}
     <div></div>
     {% include 'basics/nav.html' %}

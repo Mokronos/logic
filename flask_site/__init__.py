@@ -4,8 +4,7 @@ import os
 from flask import Flask
 
 from . import db
-from . import auth
-from . import base
+from . import base, auth, argue
 
 def create_app(test_config=None):
 
@@ -19,6 +18,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(base.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(argue.bp)
 
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
@@ -31,8 +31,4 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
     return app

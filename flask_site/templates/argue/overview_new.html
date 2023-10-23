@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Overview</h1>
+    <h2>Arguments</h2>
+    {% for argument in arguments %}
+        <div class="argument-container">
+        <div style="display:flex;">
+            {% for conclusion_ids in arguments_conclusions[argument.id] %}
+            <div style="text-align:center;flex:1;border:1px solid black;">
+                Conclusion {{ conclusion_ids.conclusion_id }}
+            </div>
+            {% endfor %}
+        </div>
+        <div>
+        Argument: {{ argument.id }} | {{ argument.title }} | {{ argument.content }}
+        <button hx-delete="{{ url_for('argue.delete', id=argument.id) }}" hx-target="closest .argument-container" hx-swap="outerHTML">
+            Delete
+        </button>
+        </div>
+        <div style="display:flex;">
+            {% for premise_ids in arguments_premises[argument.id] %}
+            <div style="text-align:center;flex:1;border:1px solid black;">
+                Premise {{ premise_ids.premise_id }}
+            </div>
+            {% endfor %}
+        </div>
+        <hr style="border:5px solid black;">
+        </div>
+    {% endfor %}
+{% endblock %}

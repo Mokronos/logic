@@ -12,3 +12,4 @@ def index():
 @login_required
 def about():
     return render_template('basics/about.html')
+
