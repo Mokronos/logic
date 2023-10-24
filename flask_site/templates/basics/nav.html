@@ -1,6 +1,19 @@
-<span><a href="{{ url_for('base.about') }}">About</a></span> |
-<span><a href="{{ url_for('base.index') }}">Home</a></span> |
-<span><a href="{{ url_for('argue.index') }}">Overview</a></span> |
-<span><a href="{{ url_for('argue.create', category='argument') }}">New Argument</a></span> |
-<span><a href="{{ url_for('argue.create', category='premise') }}">New Premise</a></span> |
-<span><a href="{{ url_for('argue.create', category='conclusion') }}">New Conclusion</a></span>
+<nav class="fixed top-0 z-20 w-full bg-primary-light">
+<div class="flex w-screen justify-between py-2">
+<div class="">
+<!-- <a class="m-4 rounded-lg bg-accent px-3 py-2 hover:bg-accent-light" href="{{ url_for('base.about') }}">About</a> -->
+<!-- <a class="m-4 rounded-lg bg-accent px-3 py-2 hover:bg-accent-light" href="{{ url_for('base.index') }}"> Home </a> -->
+<a class="m-2 hover:text-primary" href="{{ url_for('argue.index') }}"> Overview </a>
+<a class="m-2 hover:text-primary" href="{{ url_for('argue.create', category='argument') }}"> New Argument </a>
+<a class="m-2 hover:text-primary" href="{{ url_for('argue.create', category='premise') }}"> New Premise </a>
+<a class="m-2 hover:text-primary" href="{{ url_for('argue.create', category='conclusion') }}"> New Conclusion </a> </div>
+<div class="">
+{% if g.user %}
+    <a class="m-2 hover:text-primary" href="{{ url_for('auth.logout') }}">Log out</a>
+{% else %}
+    <a class="m-2 hover:text-primary" href="{{ url_for('auth.login') }}">Log in</a>
+    <a class="m-2 hover:text-primary" href="{{ url_for('auth.register') }}">Register</a>
+{% endif %}
+</div>
+</div>
+</nav>
