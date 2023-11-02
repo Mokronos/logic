@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import functools
 
 from .db import get_db
+from .htmx import htmx
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -43,6 +44,12 @@ def register():
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+
+    if htmx:
+        base_template = 'basics/_partial.html'
+    else:
+        base_template = 'basics/base.html'
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
