@@ -5,6 +5,7 @@ from flask import Flask
 
 from . import db
 from . import base, auth, argue
+from .htmx import htmx
 
 def create_app(test_config=None):
 
@@ -15,6 +16,7 @@ def create_app(test_config=None):
             )
 
     db.init_app(app)
+    htmx.init_app(app)
 
     app.register_blueprint(base.bp)
     app.register_blueprint(auth.bp)

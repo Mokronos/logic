@@ -1,0 +1,18 @@
+{% extends base_template %}
+{% block content %}
+<div class="flex w-full flex-col items-center">
+<div class="m-2 text-2xl">Details of {{ category }}</div>
+<div class="mb-4 w-1/2">
+    <label class="block text-sm underline">Title:</label>
+    <p class="block w-full p-2.5">{{ item.title }}</p>
+</div>
+<div class="mb-4 w-1/2">
+    <label class="block text-sm underline">Content:</label>
+    <p class="block w-full p-2.5"">{{ item.content }}</p>
+</div>
+<button hx-target="#main" hx-swap="innerHTML" hx-get="{{ url_for('argue.edit', category=category, id=item.id) }}" hx-push-url="true"
+        class="mt-4 rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6">
+        Edit
+</button>
+</div>
+{% endblock %}

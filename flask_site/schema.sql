@@ -14,8 +14,6 @@ CREATE TABLE user (
 CREATE TABLE argument (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  premise_id INTEGER,
-  conclusion_id INTEGER,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -25,7 +23,6 @@ CREATE TABLE argument (
 CREATE TABLE premise (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  argument_id INTEGER,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -37,12 +34,12 @@ CREATE TABLE argument_premise (
   premise_id INTEGER NOT NULL,
   FOREIGN KEY (argument_id) REFERENCES argument (id)
   FOREIGN KEY (premise_id) REFERENCES premise (id)
+  UNIQUE (argument_id, premise_id)
 );
 
 CREATE TABLE conclusion (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
-  argument_id INTEGER,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -54,4 +51,5 @@ CREATE TABLE argument_conclusion (
   conclusion_id INTEGER NOT NULL,
   FOREIGN KEY (argument_id) REFERENCES argument (id)
   FOREIGN KEY (conclusion_id) REFERENCES conclusion (id)
+  UNIQUE (argument_id, conclusion_id)
 );

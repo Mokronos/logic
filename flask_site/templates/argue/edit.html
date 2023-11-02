@@ -1,0 +1,22 @@
+{% extends base_template %}
+{% block content %}
+<div class="flex w-full flex-col items-center">
+<div class="m-2 text-2xl">Edit {{ category }}</div>
+<form hx-put="{{ url_for('argue.edit', category=category, id=item.id) }}" hx-target="#main" hx-swap="innerHTML" hx-push-url="true"
+    class="flex w-full flex-col items-center">
+<div class="mb-4 w-1/2">
+    <label class="block text-sm underline">Title:</label>
+    <input class="input block w-full p-2.5" name="title" type="text" value="{{ item.title }}">
+</div>
+<div class="mb-4 w-1/2">
+    <label class="block text-sm underline">Content:</label>
+    <textarea class="input block w-full p-2.5" name="content" rows="10">{{ item.content }}</textarea>
+</div>
+<button class="mt-4 block rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6">Save</button>
+<button class="mt-4 rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6"
+        hx-get="{{ url_for('argue.details', category=category, id=item.id) }}" hx-target="#main" hx-swap="innerHTML" hx-push-url="true">
+        Cancel
+</button>
+</form>
+</div>
+{% endblock %}

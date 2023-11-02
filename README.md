@@ -39,3 +39,7 @@ When to use hx-get:
 This can get confusing.
 If you want to select a different article in a small box, one could just use hx-get.
 But a user might want to share the link to the page with that article, so href + hx-boost might be better.
+
+# Structure
+
+![Structure](structure.svg)

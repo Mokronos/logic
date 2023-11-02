@@ -9,26 +9,28 @@ def add_data(db):
             )
     db.executemany(
             'INSERT INTO argument (title, content, user_id, id) VALUES (?, ?, ?, ?)',
-            [("Example Argument", "This is an example argument", 1, 1),
-             ("Example Argument 2", "This is an example argument 2", 1, 2),
-             ("Example Argument 3", "This is an example argument 3", 2, 3)]
+            [("Socrates", "Mortality of Socrates", 1, 1),
+             ("Mammals", "Backbones of Mammals", 2, 2),
+             ("Black crows", "Inductive crow color", 1, 3)]
             )
     db.executemany(
             'INSERT INTO premise (title, content, user_id, id) VALUES (?, ?, ?, ?)',
-            [("Example Premise", "This is an example premise", 1, 1),
-             ("Example Premise 2", "This is an example premise 2", 1, 2),
-             ("Example Premise 3", "This is an example premise 3", 1, 3),
-             ("Example Premise 4", "This is an example premise 4", 2, 4)]
+            [("Man", "Socrates is a man.", 1, 1),
+             ("Mortality", "All men are mortal.", 1, 2),
+             ("Backbone", "All mammals have backbones.", 1, 3),
+             ("Whales", "Whales are mammals. thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text thisis long extra text", 2, 4),
+             ("Crows", "Every crow i've seen is black.", 2, 5)
+             ]
             )
     db.executemany(
             'INSERT INTO conclusion (title, content, user_id, id) VALUES (?, ?, ?, ?)',
-            [("Example Conclusion", "This is an example conclusion", 1, 1),
-             ("Example Conclusion 2", "This is an example conclusion 2", 1, 2),
-             ("Example Conclusion 3", "This is an example conclusion 3", 2, 3)]
+            [("Socrates", "Socrates is mortal.", 1, 1),
+             ("Whales have backbones.", "This is an example conclusion 2", 1, 2),
+             ("Crows", "All crows are black.", 2, 3)]
             )
     db.executemany(
             'INSERT INTO argument_premise (argument_id, premise_id) VALUES (?, ?)',
-            [(1, 1), (1, 2), (1, 3), (2, 4)]
+            [(1, 1), (1, 2), (2, 3), (2, 4), (3, 5)]
             )
     db.executemany(
             'INSERT INTO argument_conclusion (argument_id, conclusion_id) VALUES (?, ?)',

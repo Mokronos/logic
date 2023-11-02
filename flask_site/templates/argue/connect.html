@@ -1,0 +1,30 @@
+{% extends base_template %}
+{% block content %}
+<div class="flex w-full flex-col items-center">
+    <div class="m-2 text-2xl">Connect</div>
+    <form hx-post="" hx-target="#main" hx-swap="innerHTML" hx-push-url="true"
+        class="flex w-1/2 flex-col items-center">
+        <div class="mb-4 w-full">
+            <label class="block text-sm">Connect to Argument</label>
+            <select class="input block w-full p-2.5" name="arg">
+                {% for item in arguments %}
+                <option value="{{ item.id }}">Argument: {{ item.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-4 w-full">
+            <label class="block text-sm">Select Premise or Conclusion</label>
+            <select class="input block w-full p-2.5" name="prem_conc">
+                {% for item in conclusions_premises %}
+                <option value="{'category': '{{ item.category }}', 'id': {{ item.id }}}">
+                {{ item.category }} - {{ item.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="mt-4 rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6"
+            type="submit">Save
+        </button>
+    </form>
+</div>
+{% endblock %}

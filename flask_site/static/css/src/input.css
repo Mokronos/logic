@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .input {
+    @apply text-sm shadow-lg shadow-c3 rounded-lg border border-c3 bg-c2;
+  }
+}
