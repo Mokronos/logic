@@ -45,10 +45,11 @@ def register():
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
 
-    if htmx:
-        base_template = 'basics/_partial.html'
-    else:
-        base_template = 'basics/base.html'
+    # not working, scuffed, need to make everything htmx
+    # if htmx:
+    #     base_template = 'basics/_partial.html'
+    # else:
+    base_template = 'base.html'
 
     if request.method == 'POST':
         username = request.form['username']
@@ -72,7 +73,7 @@ def login():
 
         flash(error)
 
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', base_template=base_template)
 
 @bp.route('/logout')
 def logout():
