@@ -11,9 +11,11 @@ def create_app(test_config=None):
 
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-            SECRET_KEY='dev',
+            SECRET_KEY= os.environ.get('SECRET_KEY', default='dev'),
             DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
             )
+    if app.config['SECRET_KEY'] == 'dev':
+        print('WARNING: SECRET_KEY is set to default value. This is not secure.')
 
     db.init_app(app)
     htmx.init_app(app)
