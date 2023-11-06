@@ -3,14 +3,36 @@
 {% block content %}
 <div class="flex w-full flex-col items-center">
 <div class="m-2 text-2xl">Login</div>
-<form method="post" class="flex w-full flex-col items-center">
+<form hx-post="" hx-target="this" hx-swap="outerHTML" hx-select="form"
+    novalidate
+    class="flex w-full flex-col items-center">
+{{ form.csrf_token }}
+{% if form.csrf_token.errors %}
 <div class="mb-4 w-1/2">
-    <label class="block text-sm">Username:</label>
-    <input class="input block w-full p-2.5" type="text" name="username" placeholder="Username" required>
+    <ul class="input-error">
+        {% for error in form.csrf_token.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+<div class="mb-4 w-1/2">
+    {{ form.username.label(class="block text-sm") }}
+    {{ form.username(class="input block w-full p-2.5", autocomplete="username") }}
+    <ul class="input-error">
+        {% for error in form.username.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
 </div>
 <div class="mb-4 w-1/2">
-    <label class="block text-sm">Password:</label>
-    <input class="input block w-full p-2.5" type="password" name="password" placeholder="Password" required>
+    {{ form.password.label(class="block text-sm") }}
+    {{ form.password(class="input block w-full p-2.5", autocomplete="password") }}
+    <ul class="input-error">
+        {% for error in form.password.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
 </div>
     <button class="mt-4 rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6" type="submit">Log in</button>
 </form>

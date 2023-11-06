@@ -41,4 +41,3 @@ def add_data(db):
 if __name__ == "__main__":
     from .db import get_db
     add_data(get_db())
-    print("im in init_db.py")

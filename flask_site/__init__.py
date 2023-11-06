@@ -6,6 +6,7 @@ from flask import Flask
 from . import db
 from . import base, auth, argue
 from .htmx import htmx
+from flask_wtf.csrf import CSRFProtect
 
 def create_app(test_config=None):
 
@@ -17,10 +18,14 @@ def create_app(test_config=None):
     if app.config['SECRET_KEY'] == 'dev':
         print('WARNING: SECRET_KEY is set to default value. This is not secure.')
 
+
     db.init_app(app)
     htmx.init_app(app)
 
-    app.register_blueprint(base.bp)
+    csrf = CSRFProtect()
+    csrf.init_app(app)
+
+    # app.register_blueprint(base.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(argue.bp)
 

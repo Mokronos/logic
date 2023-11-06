@@ -44,6 +44,22 @@ On the other hand, if the recourse gets requested via a hx-get request (another 
 So be careful with redirects.
 Either only use hx-boost, only hx-get/etc. or make sure all requests to a page you redirect to are either hx-boost or hx-get/etc (kinda seperating stuff).
 
+### Ideas
+
+Use hx-get everywhere.
+Whenever there is a redirect, add serverside events to target the correct element (HX-Retarget, HX-Reswap, HX-Reselect).
+
+Ok, nicest way might actually be to use HX-Location on the server after a post request. This issues a get request from the client to the defined location.
+One quirk i found is that default target and SOURCE of that new get request is the body.
+The target part is obvious and a normal default, but the source part creates a visual white flash of the whole page, because the body class gets adjusted.
+This can be fixed by specifying the source on the HX-Location json response to a hidden element, i just put a hidden div with id="htmx-source" as the first element of the body.
+I first tried to use 'a' as the element that triggers the request, but it uses a different link and flashes it.
+
+### Htmx decorator
+
+I created a decorator that creates an abstraction for the pattern of checking if the request is a hx-request and then returning a partial template or the full base template.
+It requires to return the template and the context in a dict.
+Not sure if there is a better solution.
 
 # Deployment
 

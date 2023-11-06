@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
     <script src="https://unpkg.com/htmx.org@1.9.6" integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/htmx_utils.js') }}"></script>
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
@@ -12,7 +13,8 @@
 {# this is probably the wrong solution (history stuff) #}
 {# disables history store, so that back button always re-requests the resource #}
 {# necessary when editing something an item and then going back to the list #}
-<body hx-boost="true" hx-history="false">
+<body hx-history="false">
+    <div class="hidden" id="htmx-location-source"></div>
     <div class="flex h-screen w-screen flex-col text-white">
 
         <nav class="flex h-10 flex-none flex-row items-center justify-between bg-c2">
@@ -30,8 +32,8 @@
             </div>
         </div>
 
-        <div class="flex h-10 flex-none justify-end bg-c2">
-            footer
+        <div class="flex h-10 flex-none flex-row items-center justify-end bg-c2">
+            {% include 'basics/footer.html' %}
         </div>
     </div>
 </body>

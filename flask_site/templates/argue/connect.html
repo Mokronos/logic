@@ -14,9 +14,9 @@
         </div>
         <div class="mb-4 w-full">
             <label class="block text-sm">Select Premise or Conclusion</label>
-            <select class="input block w-full p-2.5" name="prem_conc">
+            <select class="input block w-full p-2.5" name="connection">
                 {% for item in conclusions_premises %}
-                <option value="{'category': '{{ item.category }}', 'id': {{ item.id }}}">
+                <option value="{{ item.category }}">
                 {{ item.category }} - {{ item.title }}
                 </option>
                 {% endfor %}

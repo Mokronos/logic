@@ -1,26 +1,29 @@
-from flask import render_template, redirect, url_for, request, Blueprint, g, flash, make_response
+from flask import render_template, redirect, url_for, request, Blueprint, g, flash, Markup, escape
 from .db import get_db
 from .htmx import htmx
 
 from .auth import login_required
-# this seems weird, why can't i import utils.data (__init__ exists)
 from .utils import data
+from .utils.helpers import htmx_required
 
-bp = Blueprint('argue', __name__, url_prefix='/argue')
+import json
+import textwrap
 
-@bp.route('/')
-@login_required
-def index():
+bp = Blueprint('argue', __name__, url_prefix='/')
+
+@bp.route('/', methods=('GET',))
+@htmx_required
+def overview():
     db = get_db()
     arguments = db.execute(
-            'SELECT * FROM argument ORDER BY created DESC',
+            'SELECT argument.*, user.username FROM argument JOIN user ON argument.user_id = user.id ORDER BY created DESC',
             ()
             ).fetchall()
 
     # get list of all the premises ids of each argument
+    # there might be a better way to do this, via a join or something
     arguments_premises = dict()
     arguments_conclusions = dict()
-    md = dict()
     for argument in arguments:
         prems = db.execute(
                 'SELECT id,title,content FROM argument_premise INNER JOIN premise ON argument_premise.premise_id = premise.id WHERE argument_premise.argument_id = ?',
@@ -33,62 +36,41 @@ def index():
                 ).fetchall()
         arguments_conclusions[argument['id']] = concs
 
-        
+    return {'template': 'argue/overview.html',
+            'context': {'arguments': arguments, 'arguments_premises': arguments_premises, 'arguments_conclusions': arguments_conclusions}}
 
-    # create tree diagram structure of argument in html
-
-    premises = db.execute(
-            'SELECT * FROM premise WHERE user_id = ? ORDER BY created DESC',
-            (g.user['id'],)
-            ).fetchall()
-    conclusions = db.execute(
-            'SELECT * FROM conclusion WHERE user_id = ? ORDER BY created DESC',
-            (g.user['id'],)
-            ).fetchall()
-
-
-
-    return render_template('argue/overview.html',
-                           arguments=arguments,
-                           premises=premises,
-                           conclusions=conclusions,
-                           arguments_premises=arguments_premises,
-                           arguments_conclusions=arguments_conclusions,
-                           md=md)
 
 @bp.route('/connect', methods=('GET', 'POST'))
+@htmx_required
 @login_required
 def connect():
 
     db = get_db()
 
-    if htmx:
-        base_template = 'basics/_partial.html'
-    else:
-        base_template = 'base.html'
-
     if request.method == 'POST':
-        argument_id = request.form.get('arg')
-        prem_conc = request.form.get('prem_conc')
-        if not argument_id or not prem_conc:
-            return make_response("Bad request", 400)
-        import ast
-        prem_conc = ast.literal_eval(prem_conc)
 
-        print(f"Connecting {prem_conc['category']} {prem_conc['id']} to argument {argument_id}")
+        argument_id = request.form.get('arg')
+        category = request.form.get('category')
+        id = 1
+
+        arg_ids = db.execute("""
+                            SELECT id FROM argument WHERE user_id = ?
+                            """,
+                            (g.user['id'],)
+                            ).fetchall()
 
         try:
-            if prem_conc['category'] == 'premise':
+            if category == 'premise':
                 db.execute("""
                         INSERT INTO argument_premise (argument_id, premise_id) VALUES (?, ?)
                         """,
-                        (argument_id, prem_conc['id'])
+                        (argument_id, id)
                         )
-            elif prem_conc['category'] == 'conclusion':
+            elif category == 'conclusion':
                 db.execute("""
                         INSERT INTO argument_conclusion (argument_id, conclusion_id) VALUES (?, ?)
                         """,
-                        (argument_id, prem_conc['id'])
+                        (argument_id, id)
                         )
             db.commit()
         except db.IntegrityError:
@@ -114,28 +96,22 @@ def connect():
                                       (g.user['id'],)
                                       ).fetchall()
 
-    return render_template('argue/connect.html', base_template=base_template, arguments=arguments, conclusions_premises=conclusions_premises)
+    return 'argue/connect.html', {'arguments': arguments, 'conclusions_premises': conclusions_premises}
 
 @bp.route('/list', methods=('GET','POST'))
-@login_required
+@htmx_required
 def list_overview():
-    # hacky
-    re = request.args.get('re')
-
-    if htmx and re:
-        print("htmx is enabled")
-        base_template = 'basics/_partial.html'
-    else:
-        base_template = 'base.html'
 
     if request.method == 'POST':
         items = data.get_all(get_db(), g, request)
-        return render_template('argue/list.html', base_template = base_template, items=items)
+        return 'argue/list.html', {'items': items}
 
     items = data.get_all(get_db(), g, request)
-    return render_template('argue/list.html', base_template=base_template, items=items) 
+    return 'argue/list.html', {'items': items}
+
 
 @bp.route('/create/<category>', methods=('GET', 'POST'))
+@htmx_required
 @login_required
 def create(category):
     if category == 'argument':
@@ -161,11 +137,11 @@ def create(category):
                 except db.IntegrityError:
                     error = f"Argument {title} is already registered."
                 else:
-                    return redirect(url_for('argue.index'))
+                    return redirect(url_for('argue.overview'))
 
             flash(error)
 
-        return render_template('argue/create_argument.html')
+        return 'argue/create_argument.html'
     
     if category == 'premise':
         if request.method == 'POST':
@@ -195,7 +171,7 @@ def create(category):
                 except db.IntegrityError:
                     error = f"Premise {title} is already registered."
                 else:
-                    return redirect(url_for('argue.index'))
+                    return redirect(url_for('argue.overview'))
 
             flash(error)
 
@@ -205,7 +181,7 @@ def create(category):
                 (g.user['id'],)
                 ).fetchall()
 
-        return render_template('argue/create_premise.html', arguments=arguments)
+        return 'argue/create_premise.html', {'arguments': arguments}
 
     if category == 'conclusion':
         if request.method == 'POST':
@@ -237,7 +213,7 @@ def create(category):
                 except db.IntegrityError:
                     error = f"Conclusion {title} is already registered."
                 else:
-                    return redirect(url_for('argue.index'))
+                    return redirect(url_for('argue.overview'))
 
             flash(error)
         db = get_db()
@@ -246,14 +222,13 @@ def create(category):
                 (g.user['id'],)
                 ).fetchall()
 
-        return render_template('argue/create_conclusion.html', arguments=arguments)
-    return redirect(url_for('argue.index'))
+        return 'argue/create_conclusion.html', {'arguments': arguments}
+    return redirect(url_for('argue.overview'))
 
 
 @bp.route('/delete/<category>/<int:id>', methods=('DELETE',))
 @login_required
 def delete(id, category):
-    print(f"Deleting {category} {id}")
     db = get_db()
     check = None
     if category == 'argument':
@@ -271,15 +246,10 @@ def delete(id, category):
 
 
 @bp.route('/details/<category>/<int:id>', methods=('GET',))
-@login_required
+@htmx_required
 def details(id, category):
 
     db = get_db()
-    if htmx:
-        print("htmx is enabled in details")
-        base_template = 'basics/_partial.html'
-    else:
-        base_template = 'base.html'
 
     if category == 'argument':
         item = db.execute(
@@ -297,30 +267,25 @@ def details(id, category):
                 (id,)
                 ).fetchone()
     else:
-        return redirect(url_for('argue.list_overview', re=True))
+        return redirect(url_for('argue.list_overview'))
 
     if not item:
         flash("Requested item does not exist (anymore?)")
-        return redirect(url_for('argue.list_overview', re=True))
+        return redirect(url_for('argue.list_overview'))
 
-    return render_template('argue/details.html', base_template=base_template, item=item, category=category)
+    return 'argue/details.html', {'item': item, 'category': category}
+
     
 @bp.route('/edit/<category>/<int:id>', methods=('GET', 'PUT'))
+@htmx_required
 @login_required
 def edit(id, category):
 
     db = get_db()
 
-    if htmx:
-        print("htmx is enabled in edit")
-        base_template = 'basics/_partial.html'
-    else:
-        base_template = 'base.html'
-
     if request.method == 'PUT':
         title = request.form['title']
         content = request.form['content']
-        print("im putting")
 
         if category == 'argument':
             db.execute(
@@ -357,15 +322,13 @@ def edit(id, category):
                 (id,)
                 ).fetchone()
     else:
-        # hacky
-        return redirect(url_for('argue.list_overview', re=True))
+        return redirect(url_for('argue.list_overview'))
 
-    return render_template('argue/edit.html', base_template=base_template, item=item, category=category)
+    return 'argue/edit.html', {'item': item, 'category': category}
 
 
 @bp.route('/share/<int:id>', methods=('GET',))
 def share(id):
-
     db = get_db()
 
     # get argument info
@@ -373,7 +336,7 @@ def share(id):
             "SELECT * FROM argument WHERE id = ?",
             (id,)
             ).fetchone()
-    
+
     # get premises and conclusions
     prems = db.execute(
             "SELECT * FROM premise WHERE id IN (SELECT premise_id FROM argument_premise WHERE argument_id = ?)",
@@ -384,26 +347,36 @@ def share(id):
             (id,)
             ).fetchall()
 
-    md_prems = "".join([f"### {prem['title']}\n{prem['content']}\n" for prem in prems])
-    md_concs = "".join([f"### {conc['title']}\n{conc['content']}\n" for conc in concs])
-    
+    # escape probably not necessary, not using in html, only script tags
+    # Build markdown content for premises
+    md_prems = '\n'.join([f"- **{escape(prem['title'])}**: {escape(prem['content'])}\n" for prem in prems])
 
-    markdown = f"""
-    # {argument['title']}
-    {argument['content']}
-    ## Premises
-    {md_prems}
-    ## Conclusion
-    {md_concs}
-    Link: [{request.url_root}argue/details/argument/{id}]({request.url_root}argue/details/argument/{id})
-    """
-    markdown = markdown.replace("\n", "\\n")
-    markdown = " ".join(markdown.split())
-    print(markdown)
-    resp = f'''
+    # Build markdown content for conclusions
+    md_concs = '\n'.join([f"- **{escape(conc['title'])}**: {escape(conc['content'])}\n" for conc in concs])
+
+    # Construct the entire markdown string
+    markdown = (
+        f"# Argument Title: {escape(argument['title'])}\n\n"
+        f"{escape(argument['content'])}\n\n"
+        "## Premises\n"
+        f"{md_prems}\n\n"
+        "## Conclusions\n"
+        f"{md_concs}\n\n"
+        f"---\n\n"
+        f"[Link to Full Argument Details]({request.url_root}argue/details/argument/{id})"
+    )
+
+    # Escape the markdown for safe inclusion in a JavaScript string
+    escaped_markdown = json.dumps(markdown)
+
+    # Generate the script snippet to copy the escaped markdown
+    script = f'''
     <script>
-        navigator.clipboard.writeText("{markdown}")
+        navigator.clipboard.writeText({escaped_markdown})
     </script>
     '''
-    print(resp)
-    return resp
+    return script
+
+@bp.route('/status', methods=('GET',))
+def status():
+    return render_template('basics/flash.html')

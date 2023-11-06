@@ -1,84 +1,121 @@
 from flask import (
-        render_template, redirect, url_for, request, Blueprint, flash, session, g
+        render_template, redirect, url_for, request, Blueprint, flash, session, g, Response
         )
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import functools
+import json
 
 from .db import get_db
 from .htmx import htmx
+from .utils.helpers import htmx_required
+from .forms import LoginForm, RegisterForm
+from flask_wtf import FlaskForm
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/register', methods=('GET', 'POST'))
+@htmx_required
 def register():
 
+    form = RegisterForm()
+
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+
+        if not form.validate():
+
+            # bad request
+            return {'template': 'auth/register.html', 'context':{'form': form}, 'code': 400}
+
+        username = form.username.data
+        # password2 equality already validated by form
+        password = form.password.data
 
         db = get_db()
-        error = None
 
-        if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
+        try:
+            db.execute(
+                    'INSERT INTO user (username, password) VALUES (?, ?)',
+                    (username, generate_password_hash(password))
+                    )
+            db.commit()
+            resp = Response()
+            resp.headers['HX-Location'] = json.dumps({'path': url_for('auth.login'), 'target': '#main', 'source': '#htmx-location-source'})
+            # no content to send on successful registration
+            resp.status_code = 204
+            return resp
+        except db.IntegrityError:
+            error = f"Username {username} is not available anymore."
+            form.username.errors += (error,)
 
-        if error is None:
-            try:
-                db.execute(
-                        'INSERT INTO user (username, password) VALUES (?, ?)',
-                        (username, generate_password_hash(password))
-                        )
-                db.commit()
-            except db.IntegrityError:
-                error = f"User {username} is already registered."
-            else:
-                return redirect(url_for('auth.login'))
+            # conflict with server state
+            return {'template': 'auth/register.html', 'context':{'form': form}, 'code': 409}
 
-        flash(error)
 
-    return render_template('auth/register.html')
+
+    return {'template': 'auth/register.html', 'context':{'form': form}}
 
 @bp.route('/login', methods=('GET', 'POST'))
+@htmx_required
 def login():
 
-    # not working, scuffed, need to make everything htmx
-    # if htmx:
-    #     base_template = 'basics/_partial.html'
-    # else:
-    base_template = 'base.html'
+    form = LoginForm()
 
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+
+        if not form.validate():
+
+            # bad request
+            return {'template': 'auth/login.html', 'context':{'form': form}, 'code': 400}
+
+        username = form.username.data
+        password = form.password.data
 
         db = get_db()
-        error = None
         user = db.execute(
-                'SELECT * FROM user WHERE username = ?', (username,)
+                'SELECT password, id FROM user WHERE username = ?', (username,)
                 ).fetchone()
 
-        if user is None:
-            error = 'Incorrect username.'
-        elif not check_password_hash(user['password'], password):
-            error = 'Incorrect password.'
+        if user and check_password_hash(user['password'], password):
 
-        if error is None:
-            session.clear()
-            session['user_id'] = user['id']
-            return redirect(url_for('base.index'))
+                session.clear()
+                session['user_id'] = user['id']
 
-        flash(error)
+                resp = Response()
+                resp.headers['HX-Trigger'] = 'auth-status-changed'
+                resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
+                # no content to send on successful login
+                resp.status_code = 204
+                return resp
 
-    return render_template('auth/login.html', base_template=base_template)
+        error = 'Incorrect username or password.'
+        form.username.errors += (error,)
+        form.password.errors += (error,)
 
-@bp.route('/logout')
+        return {'template': 'auth/login.html', 'context':{'form': form}, 'code': 401}
+
+
+    return {'template': 'auth/login.html', 'context':{'form': form}}
+
+
+@bp.route('/logout', methods=('POST',))
 def logout():
-    session.clear()
-    return redirect(url_for('base.index'))
+
+    # just for csrf validation
+    form = FlaskForm()
+    if form.validate_on_submit():
+        session.clear()
+        resp = Response()
+        resp.headers['HX-Trigger'] = 'auth-status-changed'
+        resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
+        return resp
+    return "Token is invalid."
+
+
+@bp.route('/status')
+def status():
+    return render_template('basics/auth_bar.html')
 
 @bp.before_app_request
 def load_logged_in_user():

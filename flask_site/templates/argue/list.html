@@ -7,11 +7,11 @@
     <span class="ind">Searching...</span>
     <div class="mb-8 flex w-full flex-row items-center justify-center">
     <input hx-post="" hx-target="#search-results" hx-indicator=".ind" hx-swap="innerHTML" hx-select="#search-results" hx-trigger="keyup changed delay:500ms, search" hx-include="[name='own']"
-    type="search" name="q" placeholder="Search..." autofocus class="input h-10 w-1/2 flex-none text-center">
+    type="search" name="q" placeholder="Search..." autofocus autocomplete="off" class="input h-10 w-1/2 flex-none text-center">
     <div class="flex flex-col items-center">
     <label for="own" class="ml-8 flex-auto text-sm">Only show your objects</label>
     <input hx-post="" hx-target="#search-results" hx-indicator=".ind" hx-swap="innerHTML" hx-select="#search-results" hx-trigger="change" hx-include="[name='q']"
-    type="checkbox" name="own" class="input ml-8 h-8 w-8 flex-none accent-c3 hover:cursor-pointer">
+    type="checkbox" name="own" id="own" class="input ml-8 h-8 w-8 flex-none accent-c3 hover:cursor-pointer">
     </div>
     </div>
     <div id="search-results" class="w-full flex-auto items-center">

@@ -4,6 +4,9 @@
 
 @layer components {
   .input {
-    @apply text-sm shadow-lg shadow-c3 rounded-lg border border-c3 bg-c2;
+    @apply text-sm shadow-md shadow-c3 rounded-lg border border-c3 bg-c2;
+  }
+  .input-error {
+    @apply text-sm text-red-500 mt-2;
   }
 }

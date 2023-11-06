@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends base_template %}
 {% block content %}
 
 <div class="flex flex-col items-center" >
@@ -7,12 +7,12 @@
         <div class="flex h-20 flex-none flex-row">
             {% for conc in arguments_conclusions[argument.id] %}
             <div class="flex-auto border-4 border-yellow-400 bg-red-700">
-                Conclusion {{ conc.id }} | {{ conc.title }} | {{ conc.content }}
+                Conclusion: {{ conc.title }} | {{ conc.content }}
             </div>
     {% endfor %}
         </div>
         <div class="flex h-20 flex-none flex-row justify-between">
-            <div> Argument {{ argument.id }} | {{ argument.title }} | {{ argument.content }} | User {{ argument.user_id }}
+            <div> {{ argument.title }} | {{ argument.content }} | by {{ argument.username }}
             </div>
             <script></script>
             <button class="m-2 rounded-lg bg-c2 px-5 py-1 text-center text-sm font-medium hover:bg-c3"
@@ -23,7 +23,7 @@
         <div class="flex h-20 flex-none flex-row overflow-auto">
             {% for prem in arguments_premises[argument.id] %}
             <div class="flex-auto truncate border-4 border-yellow-400 bg-red-700">
-                Premise {{ prem.id }} | {{ prem.title }} | {{ prem.content }}
+                Premise: {{ prem.title }} | {{ prem.content }}
             </div>
             {% endfor %}
         </div>

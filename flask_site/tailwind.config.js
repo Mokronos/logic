@@ -17,6 +17,16 @@ module.exports = {
             fontFamily: {
                 'sans': ['Inter var', ...defaultTheme.fontFamily.sans],
             },
+            keyframes: {
+                fadeOut: {
+                    '0%': { opacity: '1' },
+                    '99%': { opacity: '0', visibility: 'visible' },
+                    '100%': { opacity: '0', visibility: 'hidden', pointerEvents: 'none' },
+                }
+            },
+            animation: {
+                'fade-out': 'fadeOut 2s 2s forwards ease-out'
+            }
         },
     },
     plugins: [],

@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends base_template %}
 {% block content %}
 <div class="m-4 mx-auto max-w-2xl">
 <h1 class="mb-4 text-xl font-bold">Create New Argument</h1>
-<form method="post">
+<form hx-post="{{ url_for('argue.create', category='argument') }}" hx-swap="innerHTML" hx-target="#main">
     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <div class="sm:col-span-2">
             <label class="mb-2 block text-sm font-medium" for="title">Title</label>
@@ -13,7 +13,10 @@
             <textarea class="block w-full rounded-lg border border-c3 bg-c2 p-2.5 text-sm shadow-lg shadow-c3" placeholder="Type Description" name="content" id="content"></textarea>
         </div>
     </div>
-    <button class="mt-4 inline-flex items-center rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6" type="submit">Create</button>
+    <button
+        class="mt-4 inline-flex items-center rounded-lg bg-c2 px-5 py-2.5 text-center text-sm font-medium hover:bg-c3 sm:mt-6">
+        Create
+    </button>
 </form>
 </div>
 {% endblock %}
