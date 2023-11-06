@@ -110,7 +110,11 @@ def logout():
         resp.headers['HX-Trigger'] = 'auth-status-changed'
         resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
         return resp
-    return "Token is invalid."
+
+    resp = Response()
+    resp.status_code = 401
+    resp.headers['HX-Refresh'] = 'true'
+    return resp
 
 
 @bp.route('/status')
