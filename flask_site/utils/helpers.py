@@ -1,6 +1,7 @@
-from flask import render_template
-from flask.wrappers import Response
+from flask import render_template, url_for
+from flask import Response
 import functools
+import json
 from ..htmx import htmx
 
 
@@ -45,3 +46,13 @@ def htmx_required(view):
         return resp
 
     return wrapped_view
+
+def htmx_redirect(view, code=204, target="#main", source="#htmx-location-source", flash=False):
+    resp = Response()
+    resp.status_code = code
+    resp.headers['HX-Location'] = json.dumps({'path': url_for(view), 'target': target, 'source': source})
+    if flash:
+        resp.headers['HX-Trigger'] = 'status-changed'
+    print(resp.headers)
+    return resp
+    

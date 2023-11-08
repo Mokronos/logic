@@ -1,22 +1,27 @@
-from flask import render_template, redirect, url_for, request, Blueprint, g, flash, Markup, escape
+from flask import ( render_template, url_for, request,
+                   Blueprint, g, flash, Markup, escape, Response)
+
+from .forms import ConnectionForm, ArgumentForm, PremiseForm, ConclusionForm
 from .db import get_db
 from .htmx import htmx
 
 from .auth import login_required
 from .utils import data
-from .utils.helpers import htmx_required
+from .utils.helpers import htmx_required, htmx_redirect
 
 import json
-import textwrap
 
 bp = Blueprint('argue', __name__, url_prefix='/')
 
 @bp.route('/', methods=('GET',))
 @htmx_required
 def overview():
+
     db = get_db()
-    arguments = db.execute(
-            'SELECT argument.*, user.username FROM argument JOIN user ON argument.user_id = user.id ORDER BY created DESC',
+    arguments = db.execute((
+            'SELECT argument.*, user.username '
+            'FROM argument JOIN user ON argument.user_id = user.id '
+            'ORDER BY created DESC'),
             ()
             ).fetchall()
 
@@ -40,18 +45,374 @@ def overview():
             'context': {'arguments': arguments, 'arguments_premises': arguments_premises, 'arguments_conclusions': arguments_conclusions}}
 
 
+
+@bp.route('/search', methods=('GET',))
+@htmx_required
+def search():
+
+    items = data.get_all(request)
+    return {'template':'argue/search.html', 'context': {'items': items}}
+
+
+@bp.route('/arguments/create', methods=('GET', 'POST'))
+@htmx_required
+@login_required
+def arguments_create():
+
+    form = ArgumentForm()
+
+    if request.method == 'POST':
+
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/arguments_create.html', 'context':{'form': form}, 'code': 400}
+
+        title = form.title.data
+        content = form.content.data
+
+        db = get_db()
+
+        try:
+            row = db.execute(
+                    'INSERT INTO argument (title, content, user_id) VALUES (?, ?, ?)',
+                    (title, content, g.user['id'])
+                    )
+            db.commit()
+            resp = Response()
+            resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
+            # no content to send on successful registration
+            resp.status_code = 204
+            return resp
+
+        except db.IntegrityError:
+
+            # conflict with server state
+            return {'template': 'argue/arguments_create.html', 'context':{'form': form}, 'code': 409}
+
+
+    return {'template': 'argue/arguments_create.html', 'context':{'form': form}}
+
+
+@bp.route('/premises/create', methods=('GET', 'POST'))
+@htmx_required
+@login_required
+def premises_create():
+
+    form = PremiseForm()
+
+    arguments = data.fetch_items_for_user('argument')
+
+    form.argument.choices = [(-1, 'None')] + [
+    (argument['id'], f"{argument['id']}| {argument['title']}") for argument in arguments
+    ]
+
+    if request.method == 'POST':
+
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/premises_create.html', 'context':{'form': form}, 'code': 400}
+        title = form.title.data
+        content = form.content.data
+        argument_id = form.argument.data
+
+        db = get_db()
+
+        try:
+            cur = db.execute(
+                    'INSERT INTO premise (title, content, user_id) VALUES (?, ?, ?)',
+                    (title, content, g.user['id'])
+                    )
+            if argument_id != -1:
+                db.execute(
+                        'INSERT INTO argument_premise (argument_id, premise_id) VALUES (?, ?)',
+                        (argument_id, cur.lastrowid)
+                        )
+            db.commit()
+            resp = Response()
+            resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
+            # no content to send on successful registration
+            resp.status_code = 204
+            return resp
+        except db.IntegrityError:
+            # conflict with server state
+            return {'template': 'argue/premises_create.html', 'context':{'form': form}, 'code': 409}
+
+    return {'template': 'argue/premises_create.html', 'context': {'form': form}}
+
+@bp.route('/conclusions/create', methods=('GET', 'POST'))
+@htmx_required
+@login_required
+def conclusions_create():
+
+    form = ConclusionForm()
+
+    db = get_db()
+
+    arguments = data.fetch_items_for_user('argument')
+
+    form.argument.choices = [(-1, 'None')] + [
+    (argument['id'], f"{argument['id']}| {argument['title']}") for argument in arguments
+    ]
+
+    if request.method == 'POST':
+
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/conclusions_create.html', 'context':{'form': form}, 'code': 400}
+
+        title = form.title.data
+        content = form.content.data
+        argument_id = form.argument.data
+
+        try:
+            cur = db.execute(
+                    'INSERT INTO conclusion (title, content, user_id) VALUES (?, ?, ?)',
+                    (title, content, g.user['id'])
+                    )
+            if argument_id != -1:
+                db.execute(
+                        'INSERT INTO argument_conclusion (argument_id, conclusion_id) VALUES (?, ?)',
+                        (argument_id, cur.lastrowid)
+                        )
+            db.commit()
+            return htmx_redirect('argue.overview')
+
+        except db.IntegrityError:
+            # conflict with server state
+            return {'template': 'argue/conclusions_create.html', 'context':{'form': form}, 'code': 409}
+
+    return {'template': 'argue/conclusions_create.html', 'context': {'form': form}}
+
+
+@bp.route('/arguments/<int:id>/delete', methods=('DELETE',))
+@login_required
+def arguments_delete(id):
+    db = get_db()
+
+    check = None
+    check = db.execute('DELETE FROM argument WHERE id = ? AND user_id = ?', (id, g.user['id']))
+
+    if check and check.rowcount == 0:
+        flash("You don't have permission to delete this item")
+        return "", 403
+    db.commit()
+    return "", 200
+
+
+@bp.route('/premises/<int:id>/delete', methods=('DELETE',))
+@login_required
+def premises_delete(id):
+    db = get_db()
+
+    check = None
+    check = db.execute('DELETE FROM premise WHERE id = ? AND user_id = ?', (id, g.user['id']))
+
+    if check and check.rowcount == 0:
+        flash("You don't have permission to delete this item")
+        return "", 403
+    db.commit()
+    return "", 200
+
+
+@bp.route('/conclusions/<int:id>/delete', methods=('DELETE',))
+@login_required
+def conclusions_delete(id):
+    db = get_db()
+
+    check = None
+    check = db.execute('DELETE FROM conclusion WHERE id = ? AND user_id = ?', (id, g.user['id']))
+
+    if check and check.rowcount == 0:
+        flash("You don't have permission to delete this item")
+        return "", 403
+    db.commit()
+    return "", 200
+
+@bp.route('arguments/<int:id>', methods=('GET',))
+@htmx_required
+def arguments_details(id):
+
+    db = get_db()
+
+    item = db.execute(
+            "SELECT * FROM argument WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    if not item:
+        flash("Requested item does not exist (anymore?)")
+        return htmx_redirect('argue.search', flash=True)
+
+    return {'template': 'argue/details.html', 'context': {'item': item, 'category': 'argument'}}
+
+
+@bp.route('premises/<int:id>', methods=('GET',))
+@htmx_required
+def premises_details(id):
+
+    db = get_db()
+
+    item = db.execute(
+            "SELECT * FROM premise WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    if not item:
+        flash("Requested item does not exist (anymore?)")
+        return htmx_redirect('argue.search', flash=True)
+
+    return {'template': 'argue/details.html', 'context': {'item': item, 'category': 'premise'}}
+
+
+@bp.route('conclusions/<int:id>', methods=('GET',))
+@htmx_required
+def conclusions_details(id):
+
+    db = get_db()
+
+    item = db.execute(
+            "SELECT * FROM conclusion WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    if not item:
+        flash("Requested item does not exist (anymore?)")
+        return htmx_redirect('argue.search', flash=True)
+
+    return {'template': 'argue/details.html', 'context': {'item': item, 'category': 'conclusion'}}
+    
+@bp.route('arguments/<int:id>/edit', methods=('GET', 'PUT'))
+@htmx_required
+@login_required
+def arguments_edit(id):
+
+    form = ArgumentForm()
+
+    db = get_db()
+
+    if request.method == 'PUT':
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/arguments_edit.html', 'context':{'form': form}, 'code': 400}
+
+        title = form.title.data
+        content = form.content.data
+
+        db.execute(
+            "UPDATE argument SET title = ?, content = ? WHERE id = ?",
+            (title, content, id)
+            )
+        db.commit()
+        resp = Response()
+        resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.arguments_details', id=id),
+                                                  'target': '#main', 'source': '#htmx-location-source'})
+        # no content to send on successful registration
+        resp.status_code = 204
+        return resp
+
+    item = db.execute(
+            "SELECT * FROM argument WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    form.title.data = item['title']
+    form.content.data = item['content']
+
+    return {'template': 'argue/arguments_edit.html', 'context': {'form': form, 'id': id}}
+
+@bp.route('premises/<int:id>/edit', methods=('GET', 'PUT'))
+@htmx_required
+@login_required
+def premises_edit(id):
+
+    form = PremiseForm()
+
+    db = get_db()
+
+    if request.method == 'PUT':
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/premises_edit.html', 'context':{'form': form}, 'code': 400}
+
+        title = form.title.data
+        content = form.content.data
+
+        db.execute(
+            "UPDATE premise SET title = ?, content = ? WHERE id = ?",
+            (title, content, id)
+            )
+        db.commit()
+        resp = Response()
+        resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.premises_details', id=id),
+                                                  'target': '#main', 'source': '#htmx-location-source'})
+        # no content to send on successful registration
+        resp.status_code = 204
+        return resp
+
+    item = db.execute(
+            "SELECT * FROM premises WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    form.title.data = item['title']
+    form.content.data = item['content']
+
+    return {'template': 'argue/premises_edit.html', 'context': {'form': form, 'id': id}}
+
+@bp.route('conclusions/<int:id>/edit', methods=('GET', 'PUT'))
+@htmx_required
+@login_required
+def conclusions_edit(id):
+
+    form = ArgumentForm()
+
+    db = get_db()
+
+    if request.method == 'PUT':
+        if not form.validate():
+            # bad request
+            return {'template': 'argue/conclusions_edit.html', 'context':{'form': form}, 'code': 400}
+
+        title = form.title.data
+        content = form.content.data
+
+        db.execute(
+            "UPDATE conclusion SET title = ?, content = ? WHERE id = ?",
+            (title, content, id)
+            )
+        db.commit()
+        resp = Response()
+        resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.conclusions_details', id=id),
+                                                  'target': '#main', 'source': '#htmx-location-source'})
+        # no content to send on successful registration
+        resp.status_code = 204
+        return resp
+
+    item = db.execute(
+            "SELECT * FROM conclusion WHERE id = ?",
+            (id,)
+            ).fetchone()
+
+    form.title.data = item['title']
+    form.content.data = item['content']
+
+    return {'template': 'argue/conclusions_edit.html', 'context': {'form': form, 'id': id}}
+
+
 @bp.route('/connect', methods=('GET', 'POST'))
 @htmx_required
 @login_required
 def connect():
 
     db = get_db()
+    form = ConnectionForm(request.form)
 
     if request.method == 'POST':
 
-        argument_id = request.form.get('arg')
-        category = request.form.get('category')
-        id = 1
+        if not form.validate():
+
+            # bad request
+            return {'template': 'argue/connect.html', 'context':{'form': form}, 'code': 400}
 
         arg_ids = db.execute("""
                             SELECT id FROM argument WHERE user_id = ?
@@ -75,257 +436,31 @@ def connect():
             db.commit()
         except db.IntegrityError:
             flash("This item is already connected to the argument")
-            return redirect(url_for('argue.connect'))
+            return htmx_redirect('argue.connect', flash=True)
 
-        return redirect(url_for('argue.connect'))
+        return htmx_redirect('argue.overview')
 
 
-    arguments = db.execute("""
-            SELECT argument.id, argument.title FROM argument 
-            WHERE argument.user_id = ?
-            """,
+    arguments = db.execute(
+            'SELECT * FROM argument WHERE user_id = ? ORDER BY created DESC',
             (g.user['id'],)
             ).fetchall()
 
-    conclusions_premises = db.execute("""
-                                      SELECT * FROM (
-                                        SELECT 'premise' AS category, title, content, id, created, user_id FROM premise UNION
-                                        SELECT 'conclusion' AS category, title, content, id, created, user_id FROM conclusion)
-                                        WHERE user_id = ?
-                                      """,
-                                      (g.user['id'],)
-                                      ).fetchall()
+    conclusions = db.execute(
+            'SELECT * FROM conclusion WHERE user_id = ? ORDER BY created DESC',
+            (g.user['id'],)
+            ).fetchall()
 
-    return 'argue/connect.html', {'arguments': arguments, 'conclusions_premises': conclusions_premises}
+    premises = db.execute(
+            'SELECT * FROM premise WHERE user_id = ? ORDER BY created DESC',
+            (g.user['id'],)
+            ).fetchall()
 
-@bp.route('/list', methods=('GET','POST'))
-@htmx_required
-def list_overview():
+    form.argument.choices = [(argument['id'], argument['title']) for argument in arguments]
+    form.category.choices = [('premise', 'Premise'), ('conclusion', 'Conclusion')]
+    form.connection.choices = [(premise['id'], premise['title']) for premise in premises] 
 
-    if request.method == 'POST':
-        items = data.get_all(get_db(), g, request)
-        return 'argue/list.html', {'items': items}
-
-    items = data.get_all(get_db(), g, request)
-    return 'argue/list.html', {'items': items}
-
-
-@bp.route('/create/<category>', methods=('GET', 'POST'))
-@htmx_required
-@login_required
-def create(category):
-    if category == 'argument':
-        if request.method == 'POST':
-            title = request.form['title']
-            content = request.form['content']
-
-            db = get_db()
-            error = None
-
-            if not title:
-                error = 'Title is required.'
-            elif not content:
-                error = 'Description is required.'
-
-            if error is None:
-                try:
-                    db.execute(
-                            'INSERT INTO argument (title, content, user_id) VALUES (?, ?, ?)',
-                            (title, content, g.user['id'])
-                            )
-                    db.commit()
-                except db.IntegrityError:
-                    error = f"Argument {title} is already registered."
-                else:
-                    return redirect(url_for('argue.overview'))
-
-            flash(error)
-
-        return 'argue/create_argument.html'
-    
-    if category == 'premise':
-        if request.method == 'POST':
-            title = request.form['title']
-            content = request.form['content']
-            argument_id = request.form['argument_id']
-
-            db = get_db()
-            error = None
-
-            if not title:
-                error = 'Title is required.'
-            elif not content:
-                error = 'Description is required.'
-
-            if error is None:
-                try:
-                    cur = db.execute(
-                            'INSERT INTO premise (title, content, user_id) VALUES (?, ?, ?)',
-                            (title, content, g.user['id'])
-                            )
-                    db.execute(
-                            'INSERT INTO argument_premise (argument_id, premise_id) VALUES (?, ?)',
-                            (argument_id, cur.lastrowid)
-                            )
-                    db.commit()
-                except db.IntegrityError:
-                    error = f"Premise {title} is already registered."
-                else:
-                    return redirect(url_for('argue.overview'))
-
-            flash(error)
-
-        db = get_db()
-        arguments = db.execute(
-                'SELECT id, title FROM argument WHERE user_id = ? ORDER BY created DESC',
-                (g.user['id'],)
-                ).fetchall()
-
-        return 'argue/create_premise.html', {'arguments': arguments}
-
-    if category == 'conclusion':
-        if request.method == 'POST':
-            title = request.form['title']
-            content = request.form['content']
-            argument_id = request.form['argument_id']
-
-            db = get_db()
-            error = None
-
-            if not title:
-                error = 'Title is required.'
-            elif not content:
-                error = 'Description is required.'
-
-            if error is None:
-                try:
-                    cur = db.execute(
-                            'INSERT INTO conclusion (title, content, user_id) VALUES (?, ?, ?)',
-                            (title, content, g.user['id'])
-                            )
-
-                    db.execute(
-                            'INSERT INTO argument_conclusion (argument_id, conclusion_id) VALUES (?, ?)',
-                            (argument_id, cur.lastrowid)
-                            )
-
-                    db.commit()
-                except db.IntegrityError:
-                    error = f"Conclusion {title} is already registered."
-                else:
-                    return redirect(url_for('argue.overview'))
-
-            flash(error)
-        db = get_db()
-        arguments = db.execute(
-                'SELECT id, title FROM argument WHERE user_id = ? ORDER BY created DESC',
-                (g.user['id'],)
-                ).fetchall()
-
-        return 'argue/create_conclusion.html', {'arguments': arguments}
-    return redirect(url_for('argue.overview'))
-
-
-@bp.route('/delete/<category>/<int:id>', methods=('DELETE',))
-@login_required
-def delete(id, category):
-    db = get_db()
-    check = None
-    if category == 'argument':
-        check = db.execute('DELETE FROM argument WHERE id = ? AND user_id = ?', (id, g.user['id']))
-    elif category == 'premise':
-        check = db.execute('DELETE FROM premise WHERE id = ? AND user_id = ?', (id, g.user['id']))
-    elif category == 'conclusion':
-        check = db.execute('DELETE FROM conclusion WHERE id = ? AND user_id = ?', (id, g.user['id']))
-
-    if check and check.rowcount == 0:
-        flash("You don't have permission to delete this item")
-        return "", 403
-    db.commit()
-    return "", 200
-
-
-@bp.route('/details/<category>/<int:id>', methods=('GET',))
-@htmx_required
-def details(id, category):
-
-    db = get_db()
-
-    if category == 'argument':
-        item = db.execute(
-                "SELECT * FROM argument WHERE id = ?",
-                (id,)
-                ).fetchone()
-    elif category == 'premise':
-        item = db.execute(
-                "SELECT * FROM premise WHERE id = ?",
-                (id,)
-                ).fetchone()
-    elif category == 'conclusion':
-        item = db.execute(
-                "SELECT * FROM conclusion WHERE id = ?",
-                (id,)
-                ).fetchone()
-    else:
-        return redirect(url_for('argue.list_overview'))
-
-    if not item:
-        flash("Requested item does not exist (anymore?)")
-        return redirect(url_for('argue.list_overview'))
-
-    return 'argue/details.html', {'item': item, 'category': category}
-
-    
-@bp.route('/edit/<category>/<int:id>', methods=('GET', 'PUT'))
-@htmx_required
-@login_required
-def edit(id, category):
-
-    db = get_db()
-
-    if request.method == 'PUT':
-        title = request.form['title']
-        content = request.form['content']
-
-        if category == 'argument':
-            db.execute(
-                "UPDATE argument SET title = ?, content = ? WHERE id = ?",
-                (title, content, id)
-                )
-        elif category == 'premise':
-            db.execute(
-                "UPDATE premise SET title = ?, content = ? WHERE id = ?",
-                (title, content, id)
-                )
-        elif category == 'conclusion':
-            db.execute(
-                "UPDATE conclusion SET title = ?, content = ? WHERE id = ?",
-                (title, content, id)
-                )
-        db.commit()
-
-        return redirect(url_for('argue.details', category=category, id=id), code=303)
-
-    if category == 'argument':
-        item = db.execute(
-                "SELECT * FROM argument WHERE id = ?",
-                (id,)
-                ).fetchone()
-    elif category == 'premise':
-        item = db.execute(
-                "SELECT * FROM premise WHERE id = ?",
-                (id,)
-                ).fetchone()
-    elif category == 'conclusion':
-        item = db.execute(
-                "SELECT * FROM conclusion WHERE id = ?",
-                (id,)
-                ).fetchone()
-    else:
-        return redirect(url_for('argue.list_overview'))
-
-    return 'argue/edit.html', {'item': item, 'category': category}
-
+    return {'template':'argue/connect.html', 'context':{'form':form}}
 
 @bp.route('/share/<int:id>', methods=('GET',))
 def share(id):

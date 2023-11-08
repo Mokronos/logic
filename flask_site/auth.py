@@ -104,20 +104,23 @@ def logout():
 
     # just for csrf validation
     form = FlaskForm()
-    if form.validate_on_submit():
+    if form.validate():
         session.clear()
         resp = Response()
         resp.headers['HX-Trigger'] = 'auth-status-changed'
         resp.headers['HX-Location'] = json.dumps({'path': url_for('argue.overview'), 'target': '#main', 'source': '#htmx-location-source'})
         return resp
 
+    # this is never reached i think, but i want it to
     resp = Response()
     resp.status_code = 401
+    # something went bad or somebody is trying weird stuff
+    # refresh page to renew the csrf token
     resp.headers['HX-Refresh'] = 'true'
     return resp
 
 
-@bp.route('/status')
+@bp.route('/status', methods=('GET',))
 def status():
     return render_template('basics/auth_bar.html')
 

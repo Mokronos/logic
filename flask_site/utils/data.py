@@ -1,7 +1,11 @@
-def get_all(db, g, request):
+from flask import g
+from ..db import get_db
 
-    q = request.form.get('q')
-    own = request.form.get('own')
+def get_all(request):
+
+    db = get_db()
+    q = request.args.get('q')
+    own = request.args.get('own')
     if g.user:
         user = g.user['id']
     else:
@@ -18,5 +22,16 @@ def get_all(db, g, request):
             ORDER BY title DESC) AS U
             JOIN user ON user.id = U.user_id
             """, ('%' + (q if q else "") + '%', 1 if own == 'on' and user else 0, user)).fetchall()
+
+    return items
+
+def fetch_items_for_user(category):
+
+    if category not in ['argument', 'premise', 'conclusion']:
+        return []
+
+    db = get_db()
+
+    items = db.execute(f"SELECT * FROM {category} WHERE user_id = ?", (g.user['id'],)).fetchall()
 
     return items

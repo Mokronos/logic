@@ -1,8 +1,3 @@
-.htmx-request {
-  opacity: 0.2;
-  transition: opacity 0s;
-}
-
 /* width */
 ::-webkit-scrollbar {
   width: 8px;
@@ -29,14 +24,15 @@ input:-webkit-autofill:active{
     -webkit-text-fill-color: #fff;
 }
 
-.ind{
-    transition: opacity 0.5s ease-in;
+#ind{
     opacity: 0;
+    transition: opacity 500ms ease-in-out;
+    background-size: 200% 100%;
 }
 
-.htmx-request .ind{
+.htmx-request #ind{
     opacity: 1;
 }
-.htmx-request.ind{
+.htmx-request#ind{
     opacity: 1;
 }

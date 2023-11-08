@@ -1,12 +1,13 @@
 import os
 
 
-from flask import Flask
+from flask import Flask, Response, flash
 
 from . import db
 from . import base, auth, argue
 from .htmx import htmx
 from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 
 def create_app(test_config=None):
 
@@ -24,6 +25,15 @@ def create_app(test_config=None):
 
     csrf = CSRFProtect()
     csrf.init_app(app)
+
+    # this should probably live in a separate file
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        resp = Response("CSRF Error")
+        resp.status_code = 400
+        flash('CSRF Error, Try again.')
+        resp.headers['HX-Refresh'] = 'true'
+        return resp
 
     # app.register_blueprint(base.bp)
     app.register_blueprint(auth.bp)

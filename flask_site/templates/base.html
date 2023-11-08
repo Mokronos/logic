@@ -10,11 +10,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='diamond.gif') }}" type="image/gif">
 </head>
-{# this is probably the wrong solution (history stuff) #}
+{# hx-history is probably the wrong solution here #}
 {# disables history store, so that back button always re-requests the resource #}
 {# necessary when editing something an item and then going back to the list #}
-<body hx-history="false">
+{# and any other type of updated status #}
+<body hx-history="false" hx-indicator="#ind">
     <div class="hidden" id="htmx-location-source"></div>
+    {% include 'basics/loading.html' %}
     <div class="flex h-screen w-screen flex-col text-white">
 
         <nav class="flex h-10 flex-none flex-row items-center justify-between bg-c2">

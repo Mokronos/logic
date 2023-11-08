@@ -22,10 +22,15 @@ module.exports = {
                     '0%': { opacity: '1' },
                     '99%': { opacity: '0', visibility: 'visible' },
                     '100%': { opacity: '0', visibility: 'hidden', pointerEvents: 'none' },
+                },
+                move: {
+                    '0%': { backgroundPosition: '100% 0' },
+                    '100%': { backgroundPosition: '-100% 0' },
                 }
             },
             animation: {
-                'fade-out': 'fadeOut 2s 2s forwards ease-out'
+                'fade-out': 'fadeOut 2s 2s forwards ease-out',
+                'move': 'move 2s linear infinite',
             }
         },
     },
