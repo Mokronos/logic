@@ -13,6 +13,7 @@
            hx-push-url="true"
            type="search" name="q" placeholder="Search..." autofocus autocomplete="off"
            class="input h-10 w-1/2 flex-none text-center">
+    {% if g.user %}
     <div class="flex flex-col items-center">
     <label for="own" class="ml-8 flex-auto text-sm">Only show your objects</label>
     <input hx-get="{{ url_for('argue.search') }}" hx-target="#search-results"
@@ -22,6 +23,7 @@
            type="checkbox" name="own" id="own" hx-params="*"
            class="input ml-8 h-8 w-8 flex-none accent-c3 hover:cursor-pointer">
     </div>
+    {% endif %}
     </div>
     <div id="search-results" class="w-full flex-auto items-center">
         {% for item  in items %}
