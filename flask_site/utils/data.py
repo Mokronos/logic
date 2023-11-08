@@ -11,6 +11,8 @@ def get_all(request):
     else:
         user = 0
 
+    query = f"%{q if q else ''}%"
+
     items = db.execute("""
             SELECT U.*, user.username FROM (
             SELECT * FROM (
@@ -18,10 +20,10 @@ def get_all(request):
             SELECT 'premise' AS category, title, content, id, created, user_id FROM premise UNION
             SELECT 'conclusion' AS category, title, content, id, created, user_id FROM conclusion)
             AS U
-            WHERE title LIKE ? AND (? = 0 OR user_id = ?)
+            WHERE (title LIKE ? OR content LIKE ? OR category LIKE ?) AND (? = 0 OR user_id = ?)
             ORDER BY title DESC) AS U
             JOIN user ON user.id = U.user_id
-            """, ('%' + (q if q else "") + '%', 1 if own == 'on' and user else 0, user)).fetchall()
+            """, (query, query, query, 1 if own == 'on' and user else 0, user)).fetchall()
 
     return items
 
