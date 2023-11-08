@@ -9,7 +9,7 @@ import json
 
 from .db import get_db
 from .htmx import htmx
-from .utils.helpers import htmx_required
+from .utils.helpers import htmx_required, htmx_redirect
 from .forms import LoginForm, RegisterForm
 from flask_wtf import FlaskForm
 
@@ -140,7 +140,7 @@ def login_required(view):
     def wrapped_view(**kwargs):
         if g.user is None:
             flash('You must be logged in to view this page.')
-            return redirect(url_for('auth.login'))
+            return htmx_redirect('auth.login', flash=True)
 
         return view(**kwargs)
 
